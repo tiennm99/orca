@@ -18,6 +18,7 @@ export abstract class RuntimeSleptMailboxWakes extends RuntimeMailWakeAdmission 
   protected readonly sleptMailboxWake = new SleptMailboxWake({
     db: () => this._orchestrationDb,
     record: (paneKey) => this.sleepingMailRecord(paneKey),
+    handlePane: (mailbox) => this.sleptAgentPaneForHandle(mailbox)?.paneKey ?? null,
     waiters: (mailbox) => this.messageWaiters.get(mailbox),
     prepare: async (record) => {
       if (this.graphStatus !== 'ready') {
@@ -281,7 +282,7 @@ export abstract class RuntimeSleptMailboxWakes extends RuntimeMailWakeAdmission 
         this.sleepingMailAddresses.clear()
         for (const pane of affected) {
           const record = this.custodyRecords.get(pane)
-          if (record && !this.sleptMailboxWake.owesPane(pane)) {
+          if (record && !this.sleptMailboxWake.owesPane(pane) && !this.holdsSleptPaneWake(pane)) {
             await this.editMailWakeRecord(record, withoutMailWake(record))
           }
         }
